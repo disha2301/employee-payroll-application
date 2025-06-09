@@ -5,6 +5,7 @@ import com.gevernova.employee.dto.EmployeeResponseDTO;
 import com.gevernova.employee.entity.Employee;
 import com.gevernova.employee.exceptionhandler.UserNotFoundException;
 import com.gevernova.employee.repository.EmployeeRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
