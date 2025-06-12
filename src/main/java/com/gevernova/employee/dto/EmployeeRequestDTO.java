@@ -15,6 +15,10 @@ import java.util.List;
 @Builder
 public class EmployeeRequestDTO {
 
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
+
     @NotBlank(message = "Name is required")
     @Pattern(regexp = "^[A-Z][a-z,A-Z]{2,}$", message = "Enter valid name")
     private String name;
@@ -23,23 +27,26 @@ public class EmployeeRequestDTO {
     private String department;
 
     @NotNull(message = "Salary is required")
-    @Min(value = 1000, message = "Salary must be atleast 1000")
+    @Min(value = 1000, message = "Salary must be at least 1000")
     private Double salary;
 
-    @NotBlank
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$")
+    @NotBlank(message = "Password is required")
+    @Pattern(
+            regexp = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$",
+            message = "Password must be at least 8 characters, include a digit, an uppercase letter, and a special character"
+    )
     private String password;
 
-    @NotBlank
-    @Pattern(regexp = "FEMALE|MALE|OTHERS")
+    @NotBlank(message = "Gender is required")
+    @Pattern(regexp = "FEMALE|MALE|OTHERS", message = "Gender must be FEMALE, MALE, or OTHERS")
     private String gender;
 
-    @Past(message = "DOB must be in past")
+    @Past(message = "DOB must be in the past")
     private LocalDate dob;
 
-    @FutureOrPresent
+    @FutureOrPresent(message = "Join date cannot be in the past")
     private LocalDate joinDate;
 
-    @NotEmpty
+    @NotEmpty(message = "Skills cannot be empty")
     private List<String> skills;
 }

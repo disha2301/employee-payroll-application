@@ -4,7 +4,10 @@ import com.gevernova.employee.dto.EmployeeRequestDTO;
 import com.gevernova.employee.dto.EmployeeResponseDTO;
 import com.gevernova.employee.entity.Employee;
 import com.gevernova.employee.exceptionhandler.UserNotFoundException;
+import com.gevernova.employee.mapper.EmployeeMapper;
 import com.gevernova.employee.repository.EmployeeRepository;
+import com.gevernova.employee.utlijms.EmailService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,92 +17,66 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class EmployeeService {
+
     private final EmployeeRepository repo;
+    private final EmailService emailService;
 
-    public EmployeeService(EmployeeRepository repo){
-        this.repo = repo;
-    }
-
-    // Map request DTO to entity
-    private Employee mapToEntity(EmployeeRequestDTO dto){
-        return Employee.builder()
-                .name(dto.getName())
-                .department(dto.getDepartment())
-                .salary(dto.getSalary())
-                .password(dto.getPassword())
-                .gender(dto.getGender())
-                .dob(dto.getDob())
-                .joinDate(dto.getJoinDate())
-                .skills(dto.getSkills())
-                .build();
-    }
-
-    // Map entity to response DTO
-    private EmployeeResponseDTO mapToDTO(Employee employee){
-        return EmployeeResponseDTO.builder()
-                .id(employee.getId())
-                .name(employee.getName())
-                .department(employee.getDepartment())
-                .salary(employee.getSalary())
-                .gender(employee.getGender())
-                .dob(employee.getDob())
-                .joinDate(employee.getJoinDate())
-                .skills(employee.getSkills())
-                // omit password for security reasons
-                .build();
-    }
-
-    // Save new employee to DB
-    public EmployeeResponseDTO createEmployee(EmployeeRequestDTO dto){
-        Employee employee = mapToEntity(dto);
+    public EmployeeResponseDTO createEmployee(EmployeeRequestDTO dto) {
+        Employee employee = EmployeeMapper.mapToEntity(dto);
         Employee saved = repo.save(employee);
         log.debug("Saved employee entity: {}", saved);
-        return mapToDTO(saved);
+
+        if (saved.getEmail() != null && !saved.getEmail().isEmpty()) {
+            try {
+                emailService.sendEmail(
+                        saved.getEmail(),
+                        "Welcome to Gevernova!",
+                        "Hi " + saved.getName() + ", your employee account has been successfully created."
+                );
+                log.info("Welcome email sent to {}", saved.getEmail());
+            } catch (MessagingException e) {
+                log.error("Failed to send welcome email to {}", saved.getEmail(), e);
+            }
+        }
+
+        return EmployeeMapper.mapToDTO(saved);
     }
 
-    // Get all employees
-    public List<EmployeeResponseDTO> getAllEmployees(){
-        return repo.findAll()
-                .stream()
-                .map(this::mapToDTO)
+    public List<EmployeeResponseDTO> getAllEmployees() {
+        return repo.findAll().stream()
+                .map(EmployeeMapper::mapToDTO)
                 .collect(Collectors.toList());
     }
 
-    // Get employee by ID
-    public EmployeeResponseDTO getEmployeeId(Long id){
+    public EmployeeResponseDTO getEmployeeId(Long id) {
         Employee employee = repo.findById(id)
                 .orElseThrow(() -> {
                     log.error("Employee not found with ID: {}", id);
                     return new UserNotFoundException("Employee not found with id: " + id);
                 });
-        return mapToDTO(employee);
+        return EmployeeMapper.mapToDTO(employee);
     }
 
-    // Update existing employee
-    public EmployeeResponseDTO updateEmployee(Long id, EmployeeRequestDTO dto){
+    public EmployeeResponseDTO updateEmployee(Long id, EmployeeRequestDTO dto) {
         Employee existing = repo.findById(id)
                 .orElseThrow(() -> {
                     log.error("Cannot update. Employee not found with ID: {}", id);
-                    return new RuntimeException("Employee not found with id: " + id);
+                    return new UserNotFoundException("Employee not found with id: " + id);
                 });
 
-        existing.setName(dto.getName());
-        existing.setDepartment(dto.getDepartment());
-        existing.setSalary(dto.getSalary());
-        existing.setPassword(dto.getPassword());
-        existing.setGender(dto.getGender());
-        existing.setDob(dto.getDob());
-        existing.setJoinDate(dto.getJoinDate());
-        existing.setSkills(dto.getSkills());
-
-        Employee saved = repo.save(existing);
-        log.debug("Updated employee entity: {}", saved);
-        return mapToDTO(saved);
+        EmployeeMapper.updateEntity(existing, dto);
+        Employee updated = repo.save(existing);
+        log.debug("Updated employee entity: {}", updated);
+        return EmployeeMapper.mapToDTO(updated);
     }
 
-    // Delete employee
-    public void deleteEmployee(Long id){
+    public void deleteEmployee(Long id) {
+        if (!repo.existsById(id)) {
+            log.error("Cannot delete. Employee not found with ID: {}", id);
+            throw new UserNotFoundException("Employee not found with id: " + id);
+        }
         log.warn("Deleting employee with ID: {}", id);
         repo.deleteById(id);
     }

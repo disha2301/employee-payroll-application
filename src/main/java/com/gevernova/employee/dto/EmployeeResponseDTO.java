@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 public class EmployeeResponseDTO {
     private Long id;
+    private String email;
     private String name;
     private String department;
     private Double salary;

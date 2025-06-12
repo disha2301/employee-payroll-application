@@ -212,6 +212,8 @@ Handled globally using `@ControllerAdvice` and `@ExceptionHandler` for:
 }
 ```
 ---
+
+
 ### 🧾 Logging
 
 Logging implemented using SLF4J with Logback:
