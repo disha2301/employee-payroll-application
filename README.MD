@@ -213,6 +213,64 @@ Handled globally using `@ControllerAdvice` and `@ExceptionHandler` for:
 ```
 ---
 
+### ✉️ JMS (Java Message Service) Integration
+
+This Spring Boot application includes optional support for **JMS-based asynchronous messaging** to handle tasks such as sending emails. However, in the current version, email is sent **directly** using `JavaMailSender` without a JMS broker.
+
+### ❓ What is JMS?
+
+JMS (Java Message Service) is a Java API for sending messages between two or more clients. It's useful for:
+
+- Decoupling components of a system
+- Handling background tasks (like sending notifications or reports)
+- Ensuring reliable message delivery via queues or topics
+
+### ⚙️ Current State in This Project
+
+✅ **Used:**
+- `JavaMailSender` for direct email delivery on employee creation
+
+
+### 📦 Dependencies Used
+
+```xml
+<!-- JavaMail for sending emails -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
+
+        <!-- JMS support (optional – can be removed if not using) -->
+<dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-activemq</artifactId>
+</dependency>
+```
+
+### ✉️ Email Sending Flow
+
+- When a new employee is created via `POST /employees`, the following occurs:
+    1. Employee is saved to the database
+    2. A **welcome email** is sent to their registered email ID using Gmail SMTP
+
+### 🔐 Gmail SMTP Setup
+
+To enable email sending from your Gmail account, follow these steps:
+
+1. Enable **2-Step Verification** in your Google account
+2. Generate an **App Password**: [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+3. Use that app password in your `application.properties` like below:
+
+```properties
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your-email@gmail.com
+spring.mail.password=your-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+```
+
+---
 
 ### 🧾 Logging
 
